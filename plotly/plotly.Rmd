@@ -1,0 +1,144 @@
+---
+title: "plotly"
+author: "Katarzyna Tokarczuk"
+date: "2024-12-28"
+output: html_document
+always_allow_html: true
+---
+
+```{r,results='hide',message=FALSE, warning=FALSE}
+library("gapminder")
+library("plotly")
+library("ggthemes")
+library("dplyr")
+```
+
+### Example 1
+```{r}
+#a) 
+g_plot<-ggplot(data=iris, aes(x=Sepal.Length, y=Petal.Length, color=Species))+ 
+  geom_point(alpha=0.5) 
+ggplotly(g_plot) 
+
+#b) 
+iris %>% 
+  plot_ly(x = ~Sepal.Length) %>% 
+  add_histogram(xbins = list(start=4, end=8, size=1)) 
+
+#c) 
+iris %>% 
+  plot_ly(x = ~Sepal.Length, y=~Petal.Length, color=~Species) %>% 
+  add_markers(marker = list(symbol = "diamond", size = 6)) 
+
+#d) 
+iris %>% 
+  filter(Sepal.Length>5)%>% 
+  count(Species) %>% 
+  plot_ly(x = ~Species, y = ~n, hoverinfo = "y") %>% 
+  add_bars() 
+
+#e) 
+iris %>% 
+plot_ly(x = ~Sepal.Length, y=~Petal.Length, color=~Species) %>% 
+  add_markers(marker = list(opacity = 0.5)) %>% 
+  layout(xaxis = list(title="Sepal Length", showgrid=FALSE), 
+         yaxis = list(title="Petal Length"), paper_bgcolor="#ababab") 
+
+#f) 
+model<-lm(Petal.Length~Sepal.Length, data=iris) 
+iris%>% 
+  plot_ly(x = ~Sepal.Length, y=~Petal.Length, color=~Species) %>% 
+  add_markers(showlegend = FALSE) %>% 
+  add_lines(y = ~fitted(model)) 
+
+#g) 
+plot1<- iris %>% 
+  plot_ly(x = ~Sepal.Length, y=~Petal.Length, color=~Species) %>% 
+  add_markers(marker = list(symbol = "diamond", size = 4))  
+plot2<-iris %>% 
+  plot_ly(x = ~Sepal.Length, y=~Petal.Length, color=~Species) %>% 
+  add_markers(marker = list(symbol = "x", size = 4))  
+subplot(plot1, plot2, nrows=2) 
+
+```
+
+
+### Task 1
+```{r}
+#a
+plot1 = ggplot(diamonds, aes(x=cut, fill=clarity)) + geom_bar()
+ggplotly(plot1)
+
+#b
+diamonds %>%
+  filter(color %in% c("G", "H", "I", "J")) %>%
+  plot_ly(x = ~carat, color = ~color, type = 'histogram', 
+           nbinsx = 7) %>%
+  layout(xaxis = list(title = 'Carat'), yaxis = list(title = 'Count'), 
+         title = 'Histogram dla diamentów o kolorach od G do J')
+
+#b
+diamonds %>% filter(color %in% c("G", "H", "I", "J")) %>%
+  plot_ly(x = ~carat, color = ~color, type = "histogram", nbinsx = 7)
+
+#c
+plot_ly(data = diamonds, x=~carat, y=~price, type="scatter",  marker = list(opacity = 0.5)) %>% add_lines(y = ~predict(lm(price ~carat, data = diamonds))) %>%
+  layout(xaxis = list(paper_bgcolor="grey", showgrid = FALSE), yaxis = list(showgrid = FALSE))
+
+#d
+wykres1 <- plot_ly(data = diamonds, x = ~carat, y = ~color, type = "box")
+wykres2 <- plot_ly(data = diamonds, x = ~carat, color = ~color, type = "histogram")
+wykres3 <- plot_ly(data = diamonds, x = ~carat, y = ~price, type = "histogram2d")
+subplot(wykres1, wykres2, wykres3, nrows = 1, shareX = TRUE, titleX = FALSE)
+
+```
+
+
+### Example 2
+```{r}
+#a) 
+iris %>% 
+  plot_ly(x = ~Sepal.Length, y = ~Sepal.Width) %>% 
+  add_markers(symbol = ~Species, symbols = c("circle-open", "square-open", "star
+open"))%>% 
+  layout(xaxis = list(title = "Sepal Length"), 
+         yaxis = list(title = "Sepal Width")) 
+
+#b) 
+iris %>% 
+  filter(Sepal.Width > 3.3) %>% 
+  plot_ly(x = ~Sepal.Length, y = ~Petal.Length) %>% 
+  add_markers(size = ~Petal.Width,  
+              color = ~Species,  
+              marker = list( sizemode = "diameter")) 
+
+#c)    
+gapminder%>% 
+  plot_ly(x = ~gdpPercap,y = ~lifeExp)%>% 
+  add_markers(size = ~pop, color = ~continent, frame = ~year)%>%  
+  animation_opts(frame = 1000, transition = 300, easing = "elastic") %>% 
+animation_slider(currentvalue = list(prefix = NULL,  font = list(color = "blue") )  ) %>% 
+  layout(xaxis = list(title="Real GDP (millions USD)"),  yaxis = list(title="Life expectancy" ))
+
+```
+
+
+### Task 2
+```{r}
+#a
+gapminder %>%
+  group_by(continent) %>%
+  summarize(mean_gdp = mean(gdpPercap)) %>%
+  plot_ly(labels = ~continent, values = ~mean_gdp, type = 'pie', marker = list(colors = RColorBrewer::brewer.pal(length(unique(gapminder$continent)), "Set3")))
+
+#b
+plot_ly(data = gapminder, x = ~year, y = ~lifeExp, type = "scatter", mode = "markers",
+        color = ~continent, symbol = ~continent, 
+        symbols = c("circle-open", "square-open", "star-open", "triangle-left", "diamond-tall"))
+
+#c
+gapminder %>%
+  plot_ly(x = ~country, y = ~lifeExp, color = ~continent) %>% add_boxplot() %>%
+  layout(xaxis = list(title = 'Kraj'), yaxis = list(title = 'srednia długość życia'),
+         title = 'Średnia długość życia z interakcją między krajem a kontynentem')
+```
